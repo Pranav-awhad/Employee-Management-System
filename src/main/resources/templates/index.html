@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Employee Management System</title>
+
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+			font-family: 'Poppins', sans-serif;
+		}
+
+		body {
+			background: linear-gradient(135deg, #0f172a, #1e293b);
+			min-height: 100vh;
+			padding: 40px;
+			color: white;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: auto;
+		}
+
+		.header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 30px;
+		}
+
+		.header h1 {
+			font-size: 36px;
+			font-weight: 600;
+		}
+
+		.card-container {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 20px;
+			margin-bottom: 30px;
+		}
+
+		.card {
+			background: rgba(255, 255, 255, 0.08);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			backdrop-filter: blur(10px);
+			padding: 25px;
+			border-radius: 20px;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+			transition: 0.3s;
+		}
+
+		.card:hover {
+			transform: translateY(-5px);
+		}
+
+		.card h2 {
+			font-size: 32px;
+			margin-top: 10px;
+		}
+
+		.form-section {
+			background: white;
+			color: black;
+			padding: 25px;
+			border-radius: 20px;
+			margin-bottom: 30px;
+		}
+
+		.form-section h2 {
+			margin-bottom: 20px;
+		}
+
+		form {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 15px;
+		}
+
+		input {
+			padding: 14px;
+			border: none;
+			border-radius: 10px;
+			background: #f1f5f9;
+			outline: none;
+			font-size: 15px;
+		}
+
+		button {
+			padding: 14px;
+			border: none;
+			border-radius: 10px;
+			background: #2563eb;
+			color: white;
+			font-size: 16px;
+			cursor: pointer;
+			transition: 0.3s;
+		}
+
+		button:hover {
+			background: #1d4ed8;
+		}
+
+		.table-section {
+			background: white;
+			padding: 25px;
+			border-radius: 20px;
+			overflow-x: auto;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th {
+			background: #2563eb;
+			color: white;
+			padding: 15px;
+		}
+
+		td {
+			padding: 15px;
+			text-align: center;
+			border-bottom: 1px solid #ddd;
+			color: #111827;
+		}
+
+		tr:hover {
+			background: #f8fafc;
+		}
+
+		.editBtn {
+			background: #16a34a;
+			margin-right: 5px;
+		}
+
+		.deleteBtn {
+			background: #dc2626;
+		}
+
+		.editBtn:hover {
+			background: #15803d;
+		}
+
+		.deleteBtn:hover {
+			background: #b91c1c;
+		}
+
+		@media(max-width:768px) {
+
+			.header {
+				flex-direction: column;
+				gap: 10px;
+			}
+
+			form {
+				grid-template-columns: 1fr;
+			}
+
+		}
+	</style>
+</head>
+
+<body>
+
+	<div class="container">
+
+		<div class="header">
+			<h1>Employee Management Dashboard</h1>
+		</div>
+
+		<div class="card-container">
+
+			<div class="card">
+				<p>Total Employees</p>
+				<h2 id="totalEmployees">0</h2>
+			</div>
+
+			<div class="card">
+				<p>Total Salary</p>
+				<h2 id="totalSalary">0</h2>
+			</div>
+
+		</div>
+
+		<div class="form-section">
+
+			<h2>Add / Update Employee</h2>
+
+			<form id="empForm">
+
+				<input type="hidden" id="empId">
+
+				<input type="text" id="name" placeholder="Employee Name" required>
+
+				<input type="number" id="salary" placeholder="Salary" required>
+
+				<button type="submit">
+					Save Employee
+				</button>
+
+			</form>
+
+		</div>
+
+		<div class="table-section">
+
+			<table>
+
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+						<th>Salary</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+
+				<tbody id="employeeTable">
+
+				</tbody>
+
+			</table>
+
+		</div>
+
+	</div>
+
+	<script>
+
+		const api = "http://localhost:8080";
+
+		loadEmployees();
+
+		document
+			.getElementById("empForm")
+			.addEventListener("submit", saveEmployee);
+
+		function loadEmployees() {
+
+			fetch(api + "/getallemp")
+
+				.then(res => res.json())
+
+				.then(data => {
+
+					let rows = "";
+
+					let totalSalary = 0;
+
+					data.forEach(emp => {
+
+						totalSalary += parseInt(emp.salary);
+
+						rows += `
+                <tr>
+                    <td>${emp.id}</td>
+                    <td>${emp.name}</td>
+                    <td>₹ ${emp.salary}</td>
+
+                    <td>
+
+                        <button
+                            class="editBtn"
+                            onclick="editEmployee(${emp.id},
+                            '${emp.name}',
+                            ${emp.salary})">
+
+                            Edit
+
+                        </button>
+
+                        <button
+                            class="deleteBtn"
+                            onclick="deleteEmployee(${emp.id})">
+
+                            Delete
+
+                        </button>
+
+                    </td>
+
+                </tr>
+                `;
+
+					});
+
+					document.getElementById("employeeTable").innerHTML = rows;
+
+					document.getElementById("totalEmployees").innerText = data.length;
+
+					document.getElementById("totalSalary").innerText = "₹ " + totalSalary;
+
+				});
+
+		}
+
+		function saveEmployee(e) {
+
+			e.preventDefault();
+
+			let id = document.getElementById("empId").value;
+
+			let employee = {
+
+				name: document.getElementById("name").value,
+
+				salary: document.getElementById("salary").value
+
+			};
+
+			if (id == "") {
+
+				fetch(api + "/insertemp", {
+
+					method: "POST",
+
+					headers: {
+						"Content-Type": "application/json"
+					},
+
+					body: JSON.stringify(employee)
+
+				})
+					.then(() => {
+
+						loadEmployees();
+
+						document.getElementById("empForm").reset();
+
+					});
+
+			}
+
+			else {
+
+				fetch(api + "/updateemp/" + id, {
+
+					method: "PUT",
+
+					headers: {
+						"Content-Type": "application/json"
+					},
+
+					body: JSON.stringify(employee)
+
+				})
+					.then(() => {
+
+						loadEmployees();
+
+						document.getElementById("empForm").reset();
+
+						document.getElementById("empId").value = "";
+
+					});
+
+			}
+
+		}
+
+		function editEmployee(id, name, salary) {
+
+			document.getElementById("empId").value = id;
+
+			document.getElementById("name").value = name;
+
+			document.getElementById("salary").value = salary;
+
+		}
+
+		function deleteEmployee(id) {
+
+			fetch(api + "/deleteemp/" + id, {
+
+				method: "DELETE"
+
+			})
+				.then(() => loadEmployees());
+
+		}
+
+	</script>
+
+</body>
+
+</html>
+
+
