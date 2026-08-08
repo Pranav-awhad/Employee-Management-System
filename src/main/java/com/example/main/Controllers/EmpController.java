@@ -1,4 +1,4 @@
-package com.example.main.Controllers;						//From controller we are mapping it to Service layer for business layer logic
+package com.example.main.Controllers;						
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.main.Entities.Employee;
 import com.example.main.Services.EmpService;
-													//test all the api in Postman and to see running Project see on chrome
+													
 @RestController
 public class EmpController {					//This is the Controller layer which is responsible for Http request and responses
 	
